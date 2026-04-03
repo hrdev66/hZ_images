@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Gallery - hZ Images</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .search-container {
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid #e9ecef;
+            border-radius: 50px;
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .search-box:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 30px;
+        }
+
+        .image-item {
+            position: relative;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .image-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+        }
+
+        .image-item img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .image-name {
+            padding: 15px;
+            font-size: 0.9rem;
+            color: #333;
+            word-break: break-all;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .image-item:hover .copy-btn {
+            opacity: 1;
+        }
+
+        .copy-btn:hover {
+            background: rgba(0,0,0,0.9);
+        }
+
+        .stats {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            text-align: center;
+            color: #666;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.9);
+        }
+
+        .modal-content {
+            margin: auto;
+            display: block;
+            max-width: 90%;
+            max-height: 90%;
+            margin-top: 5%;
+        }
+
+        .close {
+            position: absolute;
+            top: 15px;
+            right: 35px;
+            color: #f1f1f1;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: #bbb;
+        }
+
+        @media (max-width: 768px) {
+            .gallery {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                gap: 15px;
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🖼️ hZ Images Gallery</h1>
+            <p>Bộ sưu tập hình ảnh cho hosting</p>
+        </div>
+
+        <div class="search-container">
+            <input type="text" class="search-box" placeholder="Tìm kiếm hình ảnh..." id="searchInput">
+        </div>
+
+        <div class="gallery" id="gallery">
+            <!-- Images will be loaded here -->
+        </div>
+
+        <div class="stats" id="stats">
+            <p>Đang tải hình ảnh...</p>
+        </div>
+    </div>
+
+    <!-- Modal for image preview -->
+    <div id="imageModal" class="modal">
+        <span class="close">&times;</span>
+        <img class="modal-content" id="modalImage">
+    </div>
+
+    <script>
+        // Image data - you can replace this with actual image list
+        const images = [
+            '304crate.png', '9mm_rounds.png', 'alabamasturgeon.png', 'alive_chicken.png',
+            'americanshad.png', 'ammo_9.png', 'ammo_rifle.png', 'ammo-9.png',
+            'ammo-heavysniper.png', 'ammo-musket.png', 'ammo-rifle.png', 'ammo-rifle2.png',
+            'ammo-shotgun.png', 'anchovy.png', 'apex_hazard.png', 'arbody.png',
+            'arhead.png', 'armour.png', 'armourca.png', 'arowana.png',
+            'arstock.png', 'at_clip_extended_pistol.png', 'at_clip_extended_rifle.png',
+            'at_clip_extended_shotgun.png', 'at_clip_extended_smg.png', 'at_flashlight_rifle.png',
+            'at_flashlight.png', 'at_grip.png', 'at_scope_medium.png', 'at_scope_small.png',
+            'at_skin_gold.png', 'at_suppressor_heavy .png', 'at_suppressor_heavy.png',
+            'at_suppressor_light.png', 'bac.png', 'badge.png', 'badge1.png', 'badge2.png',
+            'badge3.png', 'badge4.png', 'badge5.png', 'badge6.png', 'bait.png', 'bandage.png',
+            'banggac.png', 'bangsung.png', 'bangsungc.png', 'banhnhandauxanh.png',
+            'banhnhangaquay.png', 'banhnhantranchauduongden.png', 'banhnhanvica.png',
+            'baolixi.png', 'bcs.png', 'beer.png', 'binoculars.png', 'black_money.png',
+            'black_phone.png', 'blackcrappie.png', 'blue_phone.png', 'bluebackherring.png',
+            'bluefish.png', 'bluegill.png', 'bluepearl.png', 'bo_sua_m4a4.png',
+            'bolcacahuetes.png', 'bolchips.png', 'bolnoixcajou.png', 'bolpistache.png',
+            'bonitosfish.png', 'botmi.png', 'bottle.png', 'bpAR.png', 'bpSMG.png',
+            'bpThrowable.png', 'bread.png', 'bream.png', 'brooktrout.png', 'brown_leaf.png',
+            'bsfries.png', 'BTK.png', 'bulletproof.png', 'bulltrout.png', 'burger.png',
+            'c4_bank.png', 'c4.png', 'caichuong.png', 'campfire.png', 'candy.png',
+            'cannabis.png', 'cao.png', 'carbon.png', 'carettacaretta.png', 'carkeys.png',
+            'carokit.png', 'cash.png', 'cashew.png', 'caythong.png', 'chai_rong.png',
+            'chassisAR.png', 'chassisSMG.png', 'chassisThrowable.png', 'chiakhoa.png',
+            'chip.png', 'chips.png', 'chipscheese.png', 'chipscheese.png', 'chipsribs.png',
+            'chipssalt.png', 'chocolate.png', 'chub.png', 'chuong.png', 'CIGARETTE.png',
+            'classic_phone.png', 'clip_extended_advancedrifle.png', 'clip_extended_m4a4.png',
+            'clothe.png', 'coca_leaf.png', 'coca.png', 'cocacola.png', 'cocaine.png',
+            'coke_pooch.png', 'coke.png', 'cola.png', 'colorodopikeminnow.png', 'contract.png',
+            'copper.png', 'cotbanh.png', 'coupon.png', 'craftingbook.png', 'crappie.png',
+            'creatcrews.png', 'croquettes.png', 'cruciancarp.png', 'cui.png', 'cupcake.png',
+            'cutted_wood.png', 'danishrod.png', 'dathienthach.png', 'dau_ASMG.png',
+            'dauar_ak.png', 'dauar_CP.png', 'dauar_M4.png', 'dauxanh.png', 'diamond.png',
+            'donghohengio.png', 'donut.png', 'doublehookbait.png', 'drill.png', 'drpepper.png',
+            'drug_blue.png', 'drug_red.png', 'drug_white.png', 'drumfish.png', 'duoi_ASMG.png',
+            'duoiar_ak.png', 'duoiar_CP.png', 'duoiar_M4.png', 'energy.png', 'essence.png',
+            'evidence.png', 'fabric.png', 'fertilizer.png', 'finewood.png', 'fish.png',
+            'fishbait_1.png', 'fishbait.png', 'fishingbait_2.png', 'fishingrod.png',
+            'fishingrod1.png', 'fishingrod2.png', 'fishingrod3.png', 'fishingrod4.png',
+            'fishingrod5.png', 'fixkit.png', 'fountain.png', 'GADGET_PARACHUTE.png',
+            'garbage.png', 'garfish.png', 'gem1.png', 'gem2.png', 'gem3.png', 'gem4.png',
+            'gem5.png', 'giapcs.png', 'givekey.png', 'gold_phone.png', 'gold.png',
+            'goldentrout.png', 'grand_cru.png', 'green_phone.png', 'greenlight_phone.png',
+            'greenpearl.png', 'grip.png', 'gym_membership.png', 'hamburger.png',
+            'herbal_leaf.png', 'herbal.png', 'heroin.png', 'hifi.png', 'holdupcrate.png',
+            'hom_leve5-15.png', 'hom_newbie.png', 'hom_online.png', 'homtrian.png',
+            'hopbanhBTN.png', 'hopbanhvip.png', 'hopdong.png', 'hopquanoel.png',
+            'hotdog.png', 'ic-cong.png', 'ic-ngao.png', 'ic-ngheu.png', 'ic-ott.png',
+            'ic-ovv.png', 'ic-sohuyet.png', 'ic-vooc.png', 'icetea.png', 'illegalfishbait.png',
+            'iron.png', 'item_bulldog.png', 'item_cat.png', 'item_cbr2020.png', 'item_h2r.png',
+            'item_husky.png', 'item_landrover.png', 'item_pig.png', 'item_r1.png',
+            'item_rs6.png', 'item_sh150i.png', 'item_xetrungthu.png', 'jewels.png',
+            'joint.png', 'jumelles.png', 'jus_raisin.png', 'kem.png', 'keys.png',
+            'khuonbanh.png', 'khuondau_ASMG.png', 'khuondauar_ak.png', 'khuondauar_CP.png',
+            'khuondauar_M4.png', 'khuonduoi_ASMG.png', 'khuonduoiar_ak.png',
+            'khuonduoiar_CP.png', 'khuonduoiar_M4.png', 'khuongiap.png', 'khuonsung.png',
+            'khuonthan_ASMG.png', 'khuonthanar_ak.png', 'khuonthanar_CP.png',
+            'khuonthanar_M4.png', 'koicarpblack.png', 'koidrod.png', 'lahontancutthroattrout.png',
+            'lakesturgeon.png', 'laketrout.png', 'latxe.png', 'leather.png', 'lemonade.png',
+            'licenseplate.png', 'lixi.png', 'lockpick.png', 'lonuong.png', 'loxo.png',
+            'marijuana.png', 'maykhurungtim.png', 'meat.png', 'medikit.png', 'medikitbs.png',
+            'medlangbam.png', 'meth_pooch.png', 'meth.png', 'money.png', 'mushroom.png',
+            'mustard.png', 'necklace.png', 'ngoc1sao.png', 'ngoc2sao.png', 'ngoc3sao.png',
+            'ngoc4sao.png', 'ngoc5sao.png', 'ngoc6sao.png', 'ngoc7sao.png', 'ngoc7sap.png',
+            'ngocphale.png', 'nguoituyet.png', 'nhandauxanh.png', 'nhangaquay.png',
+            'nhantranchau.png', 'nhanvica.png', 'nhom.png', 'nhua.png', 'none.svg',
+            'normalcrate.png', 'nuocduong.png', 'ocvit.png', 'onggianoel.png',
+            'opium_pooch.png', 'opium.png', 'oxygen_mask.png', 'packaged_chicken.png',
+            'packaged_plank.png', 'packaged_wood.png', 'packed_coca.png', 'packed_herbal.png',
+            'packed_poppy.png', 'packed_weed.png', 'paintbottle.png', 'palidsturgeon.png',
+            'pantfish.png', 'panties.png', 'paperbag.png', 'papers.png', 'parachute.png',
+            'pepperoni.png', 'perch.png', 'petrol_raffin.png', 'petrol.png', 'phone_hack.png',
+            'phone_module.png', 'phone.png', 'pike.png', 'pink_phone.png', 'pistachio.png',
+            'plastic.png', 'platin.png', 'platinum.png', 'plongee1.png', 'plongee2.png',
+            'poppy.png', 'poppyresin.png', 'purple_phone.png', 'radio.png', 'raisin.png',
+            'ramen.png', 'red_phone.png', 'redpearl.png', 'ring.png', 'rolex.png',
+            'roll_cigga.png', 'ruoumaiquelo.png', 'sandwich.png', 'scuba.png',
+            'secretcrate.png', 'shark.png', 'sharkfish.png', 'shortnosesucker.png',
+            'shotburst.png', 'shotgun_shells.png', 'silic.png', 'silver.png',
+            'silverymonnow.png', 'skin_ak47_assimov.png', 'skin_ak47_bloodsport.png',
+            'skin_ak47_cartel.png', 'skin_ak47_empress.png', 'skin_ak47_fireserpent.png',
+            'skin_ak47_frontsidemisthy.png', 'skin_ak47_fuelinjector.png', 'skin_ak47_mk01.png',
+            'skin_ak47_neonrider.png', 'skin_ak47_pointdisarray.png', 'skin_ak47_revenge.png',
+            'skin_ak47_vulcan.png', 'skin_ak47_wildlotus.png', 'skin_appistol_blackdrug.png',
+            'skin_appistol_blackred.png', 'skin_appistol_colorful.png', 'skin_appistol_nanalien.png',
+            'skin_appistol_purple.png', 'skin_g36c_noel.png', 'skin_katana_red.png',
+            'skin_m4a4_2thang9.png', 'skin_m4a4_asiimov.png', 'skin_m4a4_desert_strike.png',
+            'skin_m4a4_dragon_king.png', 'skin_m4a4_faded_zebra.png', 'skin_m4a4_griffin.png',
+            'skin_m4a4_howl.png', 'skin_m4a4_modern_hunter.png', 'skin_m4a4_radiation_hazard.png',
+            'skin_m4a4_technicality.png', 'skin_m4a4_trungthu.png', 'skin_pistol_blackrose.png',
+            'skin_pistol_louisvuitton.png', 'skin_pistol_neo-noir.png', 'skin_pistol_red.png',
+            'skin_pistol_watersplash.png', 'skin_pistol_white.png', 'skin_scarh_halloween.png',
+            'skin_scarh_noel.png', 'skin_smg_blue.png', 'skin_smg_naruto.png',
+            'skin_smg_pink.png', 'skin_smg_venom.png', 'skin_smg_yellow.png',
+            'skincrate.png', 'skincratekey.png', 'slaughtered_chicken.png',
+            'slimmaterialrod.png', 'small_armour.png', 'smallbluefish.png',
+            'smallmouthbass.png', 'smgbody.png', 'smghead.png', 'smgstock.png',
+            'spoonlurebait.png', 'spray_remover.png', 'spray.png', 'starburst.png',
+            'steak.png', 'steel.png', 'stone.png', 'strippedbass.png', 'suppressor.png',
+            'sweetfish.png', 'taco.png', 'tailfishbait.png', 'tench.png', 'tequila.png',
+            'than_ASMG.png', 'than.png', 'thanar_ak.png', 'thanar_CP.png', 'thanar_M4.png',
+            'thep.png', 'thitbachi.png', 'threesidedbait.png', 'thuochoitrinh.png',
+            'thuocno.png', 'thuocsida.png', 'thuocsung.png', 'tinhdau.png', 'titcrate.png',
+            'tobacco_leaf.png', 'trailburst.png', 'tranchau.png', 'trash_bread.png',
+            'trash_burgershot.png', 'trash_can.png', 'trash_chips.png', 'trash_coffee.png',
+            'trash_fags.png', 'trash_newspaper.png', 'trash_paper.png', 'trash.png',
+            'trashprobe.png', 'triplehooksbait.png', 'trungga.png', 'trungmuoi.png',
+            'tuanloc.png', 'turkey.png', 'turtle.png', 'turtlebait.png', 'ucga.png',
+            'vecong.png', 'veh.svg', 'vevip.png', 'vica.png', 'vine.png', 'vo.png',
+            'vodka.png', 'wallaye.png', 'washed_stone.png', 'water.png',
+            'WEAPON_ADVANCEDRIFLE.png', 'WEAPON_AK12.png', 'WEAPON_AK47.png',
+            'WEAPON_AK74.png', 'WEAPON_APPISTOL.png', 'WEAPON_ASSAULTRIFLE_MK2.png',
+            'WEAPON_ASSAULTRIFLE.png', 'WEAPON_ASSAULTSHOTGUN.png', 'WEAPON_ASSAULTSMG.png',
+            'WEAPON_ASVAL.png', 'WEAPON_AUG.png', 'WEAPON_AUTOSHOTGUN.png',
+            'WEAPON_BALL.png', 'WEAPON_BAT.png', 'WEAPON_BATTLEAXE.png',
+            'WEAPON_BBSHOTGUN.png', 'WEAPON_BOTTLE.png', 'WEAPON_BULLPUPRIFLE_MK2.png',
+            'WEAPON_BULLPUPRIFLE.png', 'WEAPON_BULLPUPSHOTGUN.png', 'WEAPON_BZGAS.png',
+            'WEAPON_CANDYCANE.png', 'WEAPON_CARBINERIFLE_MK2.png', 'WEAPON_CARBINERIFLE.png',
+            'WEAPON_CERAMICPISTOL.png', 'WEAPON_COMBATMG_MK2.png', 'WEAPON_COMBATMG.png',
+            'WEAPON_COMBATPISTOL.png', 'WEAPON_COMBATSHOTGUN.png', 'WEAPON_COMPACTLAUNCHER.png',
+            'WEAPON_COMPACTRIFLE.png', 'WEAPON_CROWBAR.png', 'WEAPON_DAGGER.png',
+            'WEAPON_DBSHOTGUN.png', 'WEAPON_DIGISCANNER.png', 'WEAPON_DOUBLEACTION.png',
+            'WEAPON_EMPLAUNCHER.png', 'WEAPON_FERTILIZERCAN.png', 'WEAPON_FIREEXTINGUISHER.png',
+            'WEAPON_FIREWORK.png', 'WEAPON_FLARE.png', 'WEAPON_FLAREGUN.png'
+        ];
+
+        let filteredImages = [...images];
+
+        function renderGallery() {
+            const gallery = document.getElementById('gallery');
+            const stats = document.getElementById('stats');
+            
+            gallery.innerHTML = '';
+            
+            filteredImages.forEach(imageName => {
+                const imageItem = document.createElement('div');
+                imageItem.className = 'image-item';
+                
+                const img = document.createElement('img');
+                img.src = `item/${imageName}`;
+                img.alt = imageName;
+                img.onerror = function() {
+                    this.style.display = 'none';
+                };
+                
+                const imageNameDiv = document.createElement('div');
+                imageNameDiv.className = 'image-name';
+                imageNameDiv.textContent = imageName;
+                
+                const copyBtn = document.createElement('button');
+                copyBtn.className = 'copy-btn';
+                copyBtn.textContent = 'Copy URL';
+                copyBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    const url = `https://raw.githubusercontent.com/[username]/[repository-name]/main/item/${imageName}`;
+                    navigator.clipboard.writeText(url).then(() => {
+                        copyBtn.textContent = 'Copied!';
+                        setTimeout(() => {
+                            copyBtn.textContent = 'Copy URL';
+                        }, 2000);
+                    });
+                };
+                
+                imageItem.appendChild(img);
+                imageItem.appendChild(imageNameDiv);
+                imageItem.appendChild(copyBtn);
+                
+                imageItem.onclick = () => {
+                    const modal = document.getElementById('imageModal');
+                    const modalImg = document.getElementById('modalImage');
+                    modal.style.display = 'block';
+                    modalImg.src = `item/${imageName}`;
+                };
+                
+                gallery.appendChild(imageItem);
+            });
+            
+            stats.textContent = `Hiển thị ${filteredImages.length} / ${images.length} hình ảnh`;
+        }
+
+        function filterImages(searchTerm) {
+            filteredImages = images.filter(imageName => 
+                imageName.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+            renderGallery();
+        }
+
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            filterImages(e.target.value);
+        });
+
+        // Modal functionality
+        const modal = document.getElementById('imageModal');
+        const closeBtn = document.getElementsByClassName('close')[0];
+
+        closeBtn.onclick = function() {
+            modal.style.display = 'none';
+        };
+
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        };
+
+        // Initialize gallery
+        renderGallery();
+    </script>
+</body>
+</html>
